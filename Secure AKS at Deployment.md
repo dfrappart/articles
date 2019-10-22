@@ -636,7 +636,7 @@ To sign in, use a web browser to open the page https://microsoft.com/devicelogin
 
 ```
 
-![Illustration1](./Img/AKS01.png =WIDTHxHEIGHT)
+![Illustration1](./https://github.com/dfrappart/articles/blob/master/Img/AKS01.png =WIDTHxHEIGHT)
 
 ![Illustration1](./Img/AKS02.png =WIDTHxHEIGHT)
 
