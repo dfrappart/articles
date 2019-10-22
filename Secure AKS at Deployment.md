@@ -618,3 +618,29 @@ resource "kubernetes_role_binding" "terraadminnamspace" {
 ```
 
 With this, the group corresponding to the variable AKSClusterAdminGroup is given the admin role in the namespace terra-test-namespace, that we referred to with the value ${kubernetes_namespace.terra_test_namespace.metadata.0.name}. While this interpolation is longer than writing simply the name of the namespace, it allows us to reference the terraform namespace resource rather than a hard coded namespace name.
+
+
+#### 3.4.3  Testing Authentication
+
+We are now ready to test the authentication on the cluster. The first step is to get the credentials. For this we use the az aks get-credentials command. That means we must have access to the subscription hosting the AKS cluster, because to run an az cli command, we do need to be authenticated on the Azure AD Tenant with which the subscription is associated, and we need to have set the subscription in the az cli to this said subscription.
+On the other hand, it is not necessary to give access to the subscription to all the users, or groups, for which we want to use RBAC on the AKS cluster. And that is pretty cool.
+So in my case, I ran the az aks get-credentials and then ran the kubectl command to get nodes with my account which is bound to the cluster-admin role:
+
+```powershell
+
+PS C:\Users\User1> az aks get-credentials -n AKSLabClusterwithRBAC -g RG_AKSManagedCluster --overwrite
+Merged "AKSLabClusterwithRBAC" as current context in C:\Users\User1\.kube\config
+PS C:\Users\User1> kubectl get nodes
+To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code CW48SF6FL to authenticate.
+
+
+```
+
+![Illustration1](./Img/AKS01.png =WIDTHxHEIGHT)
+
+![Illustration1](./Img/AKS02.png =WIDTHxHEIGHT)
+
+![Illustration1](./Img/AKS03.png =WIDTHxHEIGHT)
+
+![Illustration1](./Img/AKS04.png =WIDTHxHEIGHT)
+
