@@ -638,9 +638,9 @@ To sign in, use a web browser to open the page https://microsoft.com/devicelogin
 
 ![Illustration1](https://github.com/dfrappart/articles/blob/master/Img/AKS01.png)
 
-![Illustration1](./Img/AKS02.png =WIDTHxHEIGHT)
+![Illustration1](https://github.com/dfrappart/articles/blob/master/Img/AKS02.png)
 
-![Illustration1](./Img/AKS03.png =WIDTHxHEIGHT)
+![Illustration1](https://github.com/dfrappart/articles/blob/master/Img/AKS03.png)
 
-![Illustration1](./Img/AKS04.png =WIDTHxHEIGHT)
+![Illustration1](https://github.com/dfrappart/articles/blob/master/Img/AKS04.png)
 
