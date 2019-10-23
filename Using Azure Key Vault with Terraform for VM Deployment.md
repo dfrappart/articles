@@ -138,7 +138,7 @@ data "azurerm_key_vault_secret" "SecretVMPwdPortalCreatedKV" {
 
 To evaluate the capabilities targeted here, we will first deploy an Azure Key Vault first, then add a secret to it, and last but not least we will create a VM (with Terraform) and get the secret value to fill in the expected password parameter of the VM. For the test purpose, i created the following folder hierarchy:
 
-![Illustration1](https://github.com/dfrappart/articles/blob/master/Img/keyvault01.png)
+![Illustration1](./Img/keyvault01.png)
 
 ```hcl 
 
