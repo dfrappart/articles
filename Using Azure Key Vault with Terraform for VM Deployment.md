@@ -330,7 +330,7 @@ The secret then appears in the portal, thus validating the access policy is work
 
 
 
-![Illustration2](https://github.com/dfrappart/articles/blob/master/Img/keyvault02.png)
+![Illustration2](./Img/keyvault02.png)
 
 
 Now, creating the password as a secret in the Key Vault is one thing, another is to check if the secret is accessible. For this, we simply use data source and output to verify that we do read the secret: 
