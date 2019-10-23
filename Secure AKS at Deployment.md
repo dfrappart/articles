@@ -130,7 +130,7 @@ We now create the associated service principal to the application:
 ```powershell
 
 
-PS C:\Users\David> az ad sp create --id $serverApplicationId
+PS C:\Users\User1> az ad sp create --id $serverApplicationId
 {
   "accountEnabled": "True",
   "addIns": [],
@@ -295,7 +295,7 @@ To grant the required access we use the following commands:
 PS C:\Users\User1> $oAuthPermissionId=(az ad app show --id $serverApplicationId --query oauth2Permissions[0].id)
 PS C:\Users\User1> $oAuthPermissionId
 "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx"
-PS C:\Users\David> az ad app permission add --id $clientApplicationId --api $serverApplicationId --api-permissions $oAuthPermissionId=Scope
+PS C:\Users\User1> az ad app permission add --id $clientApplicationId --api $serverApplicationId --api-permissions $oAuthPermissionId=Scope
 Invoking "az ad app permission grant --id xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx f --api xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx" is needed to make the change effective
 PS C:\Users\User1> az ad app permission grant --id $clientApplicationId --api $serverApplicationId
 {
@@ -492,7 +492,7 @@ roleRef:
 subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: User
-  name: "david@teknews.cloud"
+  name: "User1@teknews.cloud"
 
 ```
 
@@ -638,9 +638,368 @@ To sign in, use a web browser to open the page https://microsoft.com/devicelogin
 
 ![Illustration1](https://github.com/dfrappart/articles/blob/master/Img/AKS01.png)
 
-![Illustration1](https://github.com/dfrappart/articles/blob/master/Img/AKS02.png)
+![Illustration2](https://github.com/dfrappart/articles/blob/master/Img/AKS02.png)
 
-![Illustration1](https://github.com/dfrappart/articles/blob/master/Img/AKS03.png)
+![Illustration3](https://github.com/dfrappart/articles/blob/master/Img/AKS03.png)
 
-![Illustration1](https://github.com/dfrappart/articles/blob/master/Img/AKS04.png)
+![Illustration4](https://github.com/dfrappart/articles/blob/master/Img/AKS04.png)
+
+
+```bash
+
+NAME                        STATUS     ROLES   AGE   VERSION
+aks-terraaksap-18551064-0   NotReady   agent   10d   v1.12.7
+aks-terraaksap-18551064-1   NotReady   agent   10d   v1.12.7
+aks-terraaksap-18551064-2   NotReady   agent   10d   v1.12.7
+
+
+```
+
+Now let’s connect with another user. This time we connect with Penny’s account who is member of the group which is bound to the cluster role admin, attached to the namespace terra-test-namespace. Note that Penny’s account has MFA enabled:
+
+```bash
+
+PS C:\Users\User1> kubectl get pods --namespace terra-test-namespace
+To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code CTU8ZT3BK to authenticate.
+
+
+```
+
+![Illustration5](https://github.com/dfrappart/articles/blob/master/Img/AKS05.png)
+
+![Illustration6](https://github.com/dfrappart/articles/blob/master/Img/AKS06.png)
+
+![Illustration7](https://github.com/dfrappart/articles/blob/master/Img/AKS07.png)
+
+![Illustration8](https://github.com/dfrappart/articles/blob/master/Img/AKS08.png)
+
+![Illustration9](https://github.com/dfrappart/articles/blob/master/Img/AKS09.png)
+
+```bash
+
+NAME                                   READY   STATUS    RESTARTS   AGE
+testnginxdeployment-6975459585-4stpg   1/1     Running   0          4h48m
+testnginxdeployment-6975459585-794gb   1/1     Running   0          4h48m
+testnginxdeployment-6975459585-n6h6r   1/1     Running   0          4h48m
+testnginxpod                           1/1     Running   0          4h48m
+PS C:\Users\User1> kubectl get nodes
+Error from server (Forbidden): nodes is forbidden: User "penny@teknews.cloud" cannot list resource "nodes" in API group "" at the cluster scope
+PS C:\Users\User1> kubectl get services --namespace terra-test-namespace
+NAME            TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)          AGE
+testnginxsvc    LoadBalancer   172.19.83.79     13.80.159.235   8080:32434/TCP   4h48m
+testnginxsvc2   LoadBalancer   172.19.137.138   13.94.205.224   8080:32601/TCP   4h49m
+PS C:\Users\User1> kubectl get services
+Error from server (Forbidden): services is forbidden: User "penny@teknews.cloud" cannot list resource "services" in API group "" in the namespace "default"
+PS C:\Users\User1>
+
+
+```
+
+We can see that the authentication is working, with MFA enabled in option in Azure AD. Also, the scope of Penny’s account is scoped to the terra-test-namespace as expected
+
+
+## 4. Kubernetes Network policy in Azure Kubernetes service
+
+Network policies allow to filter traffic between the pods in a Kubernetes Cluster. To secure the deployment of AKS, the proposition here is to add to the deployment of the cluster a set of Network Policy by default, applied to namespace. 
+
+### 4.1. Proposed Network policies
+
+By default, AKS cluster managed on its own the access for exposed apps through the service principal associated with it and with a Network Security Group associated with the Nodes. Each time a ap is exposed to the outside, a public IP is deployed and an additional rule is added on the NSG, with the corresponding load balancing rule for allowing traffic. This is fully Azure filtering and all the pods can communicate together if nothing is added in Kubernetes. To give more security, it is possible to use Kubernetes network policies, which gives IP Tables filtering capabilities between the pods.
+As a measure of basic security, we can add default network policies deployed at the same time as the namespaces creation. The examples of netpol presented here come from the githyb repo kubernetes-network-policy-recipes. 
+To block all ingress traffic in the namespace terra-test-namespace. We can use the following policy described in yaml:
+
+```yaml
+
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: default-deny-all
+  namespace: terra-test-namespace
+spec:
+  podSelector: {}
+  ingress: []
+
+```
+
+The parameter metadata.namespace allows us to associate the network policy to the namespace terra-test-namespace and the spec.pod_selector allows us to to filter on which pods we want to apply the rule.
+If, as in the example, we have pod_selector = {}, it means that we select all pods (nothing meaning everything in this case), so the policy is enforced on all pods inside the namespace. By writing an empty spec.ingress, it means we don’t select any rules for ingress so everything is dropped.
+
+Since we want to add the policy at the deployment time, we make use of the Kubernetes Terraform provider, which can deploy object such as namespaces and network policies. In Hashicorp Configuration language, it looks like this: 
+
+```hcl 
+
+##################################################################
+# Create namespace test
+
+resource "kubernetes_namespace" "terra_test_namespace" {
+    metadata {
+        annotations {
+            name    = "terra_test_namespace"
+            usage   = "for_test_namespace"
+        }
+    
+
+        labels {
+            namespacelabel = "testnamespace_label"
+        }
+
+        name        = "terra-test-namespace"
+    }
+}
+##################################################################
+# Network policy
+
+#Default network policy deny all in namespace terra-test-namespace ingress
+
+resource "kubernetes_network_policy" "terra_defaultnp_denyallin_ns_terra-test-namespace" {
+  metadata {
+    name        = "defaultnp-denyall-in"
+    namespace   = "${kubernetes_namespace.terra_test_namespace.metadata.0.name}"
+  }
+
+  spec {
+    pod_selector {}
+    ingress = []
+    policy_types = ["Ingress"]
+
+  }
+
+  
+
+}
+
+```
+
+Another possible network policy would be to block everything except the traffic between pods. In this case we would take the following policy: 
+
+```yaml
+
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  namespace: terra-test-namespace
+  name: deny-from-other-namespaces
+spec:
+  podSelector:
+    matchLabels:
+  ingress:
+  - from:
+    - podSelector: {}
+
+```
+
+This time the spec.podSelector.matchLabels being empty select all pods inside the namespace terra-test-namespace. The spec.ingress.from.podSelector being empty select all pods inside the namespace to allow the ingress traffic between the  pods inside the namespace.
+In HCL it will look like this:
+
+```hcl
+
+#Default network policy deny all ingress traffic from other namespace tp pods in  terra-test-namespace
+
+resource "kubernetes_network_policy" "terra_defaultnp_denyallin_fromotherns" {
+  metadata {
+    name        = "defaultnp_denyallin_fromotherns"
+    namespace   = "${kubernetes_namespace.terra_test_namespace.metadata.0.name}"
+  }
+
+  spec {
+    pod_selector {
+      match_labels {}
+
+    }
+    ingress = [
+      {
+        from = [
+          {
+            pod_selector {}
+          }
+          
+        ]
+      }
+    ]
+    policy_types = ["Ingress"]
+  }
+}
+
+```
+
+### 4.2. Testing Netpol
+
+Now that we have some basic concepts of Netpol, let’s try it out. We deploy an nginx pod standalone, and another one in a deployment, and we expose both with service. As said earlier, AKS will associate the public IP and manage the NSG rules to allow traffic. The deployment in Terraform looks like this: 
+
+```hcl
+
+#Create test pod nginx
+
+resource "kubernetes_pod" "testnginx" {
+  metadata {
+    name = "testnginxpod"
+    labels {
+      app = "testnginxpod"
+    }
+    namespace = "${kubernetes_namespace.terra_test_namespace.metadata.0.name}"
+  }
+
+  spec {
+    container {
+      image = "nginx:1.7.9"
+      name  = "testnginxpod"
+    }
+  }
+}
+
+#Create Service exposing test pod nginx
+
+resource "kubernetes_service" "testnginxsvc" {
+  metadata {
+    name = "testnginxsvc"
+    namespace = "${kubernetes_namespace.terra_test_namespace.metadata.0.name}"
+  }
+  spec {
+    selector {
+      app = "${kubernetes_pod.testnginx.metadata.0.labels.app}"
+    }
+    session_affinity = "ClientIP"
+    port {
+      port = 8080
+      target_port = 80
+    }
+
+    type = "LoadBalancer"
+  }
+}
+
+
+#Create test deployment
+
+resource "kubernetes_deployment" "testnginxdeployment" {
+  metadata {
+    name = "testnginxdeployment"
+    labels {
+      app = "testnginxdeployment"
+    }
+    namespace = "${kubernetes_namespace.terra_test_namespace.metadata.0.name}"
+  }
+
+  spec {
+    replicas = 3
+
+    selector {
+      match_labels {
+        app = "testnginxdeployment"
+      }
+    }
+
+    template {
+      metadata {
+        labels {
+          app = "testnginxdeployment"
+        }
+      }
+
+      spec {
+        container {
+          image = "nginx:1.7.8"
+          name  = "testnginxpoddeployment"
+
+          resources{
+            limits{
+              cpu    = "0.5"
+              memory = "512Mi"
+            }
+            requests{
+              cpu    = "250m"
+              memory = "50Mi"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+#Create Service exposing test deployment nginx
+
+resource "kubernetes_service" "testnginxsvc2" {
+  metadata {
+    name = "testnginxsvc2"
+    namespace = "${kubernetes_namespace.terra_test_namespace.metadata.0.name}"
+  }
+  spec {
+    selector {
+      app = "${kubernetes_deployment.testnginxdeployment.metadata.0.labels.app}"
+    }
+    session_affinity = "ClientIP"
+    port {
+      port = 8080
+      target_port = 80
+    }
+
+    type = "LoadBalancer"
+  }
+}
+
+```
+
+We have two services and if we use kubectl command, we can get the public ip associated with both: 
+
+```powershell
+
+PS C:\Users\User1> kubectl get services --namespace terra-test-namespace
+NAME            TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)          AGE
+testnginxsvc    LoadBalancer   172.19.83.79     13.80.159.235   8080:32434/TCP   2d23h
+testnginxsvc2   LoadBalancer   172.19.137.138   13.94.205.224   8080:32601/TCP   2d23h
+
+```
+
+Now, once we apply the default deny all policy, it won’t work anymore, and we need to specify another rule to allow traffic to reach the pods. With the following policy, we allow traffic to the service testnginxsvc, which expose the standalone pod: 
+
+```hcl
+
+#Network policy allowing external traffic on testnginxpod
+
+resource "kubernetes_network_policy" "Allow-External" {
+  metadata {
+    name = "allow-external"
+    namespace = "terra-test-namespace"
+
+  }
+
+  spec {
+    pod_selector {
+      match_labels {
+        app = "testnginxpod"
+      }
+    }
+    ingress = [
+      {
+        from = []
+      }
+    ]
+    policy_types = ["Ingress"]
+
+  }
+}
+
+
+```
+
+
+This time, with the spec.pod_selector.match_labels.app parameter, we select the pod with the value testnginxpod only. Now, the traffic is allowed on this pod, on any port. It is possible to specify more granular traffic with port option but for now it is sufficient.
+
+The service testnginxsvc is accessible: 
+
+![Illustration10](https://github.com/dfrappart/articles/blob/master/Img/AKS10.png)
+
+While the service testnginxsvc2 is not:
+
+![Illustration11](https://github.com/dfrappart/articles/blob/master/Img/AKS11.png)
+
+In the previous code, the netpol is described in HCL, but logically, we could let the team managing the application manage this kind of policy and thus, there is now reason that they would use terraform instead of yaml with kubectl.
+On the other hand, since we want to secure the AKS cluster at the deployment, having the capability to describe basic netpol in HCL gives us a way to simplify the hardening of the K8S cluster.
+
+
+## 5. Conclusion
+
+In this article, we described the deployment of an AKS cluster with terraform and how to secure it with AAD integration for authentication and network filtering with the Network Policy object in Kubernetes.
+This is only a first layer of security. AKS should be available in private deployment soon, and it is already possible to add allowed range of IP on the API endpoint, through either az cli or an ARM template. Also, the pod policy are already available. An interesting feature for securing the whole environment will be the pod identity which should allow us to leverage managed identities at the pod level and thus have a granular access from pods to other azure service without relying on hard coded secrets.
 
