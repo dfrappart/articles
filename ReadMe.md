@@ -3,12 +3,11 @@
 
 I was sick and tired about wordpress, so back to basics, this is a simple github page which will host all my new articles
 
-Below is a list of the currently available article on this page: 
+Below is a list of the currently available article on this page:  
 
 [AKS-Managed AAD](https://github.com/dfrappart/articles/blob/master/AKS-Managed%20AAD.md)
 
-[Secure AKS at the deployment
-](https://github.com/dfrappart/articles/blob/master/Secure%20AKS%20at%20Deployment.md)
+[Secure AKS at the deployment](https://github.com/dfrappart/articles/blob/master/Secure%20AKS%20at%20Deployment.md)
 
 [Archive articles in PDF](https://github.com/dfrappart/articles/blob/master/pdf/)
 
