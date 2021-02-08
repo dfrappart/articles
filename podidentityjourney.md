@@ -511,4 +511,5 @@ Also, as presented here, as an OSS, it is not fully supported by Microsoft.
 However, we mentionned that the support is coming,with a simpler way of managing it through an Addon. This is similar to the way AGIC evolved and it should become easier in time.
 On a more practical aspect, i do know that [Velero](https://velero.io/) can be installed with pod identity in mind. I would guess that the use will get more frequent and also simpler.
 Voila, i hope it was as fun for you as for me.
-See you soon
+Before i forget, i created a dedicated github repo for all the requiredinfrastructure to use this. It's [here](https://github.com/dfrappart/aksmeetup), feel free to use it.
+See you soon !
