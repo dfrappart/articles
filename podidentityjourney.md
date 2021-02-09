@@ -20,7 +20,7 @@ On the other hand, there are some prerequisite to make it works and this article
 ## 2. Review of the need  
 
 Before diving in the topic, let's put some context in place with a use case.  
-We have ann application, living on a server which need to access, let's say a database.  
+We have an application, living on a server which need to access, let's say a database.  
 Usualy, we will have a connection string which should rely on a service principal to access the database system. Here comes the trouble.  
 This service principal need to be declared in the server, with its secret or password.
 There are thus 2 important things here:
@@ -67,7 +67,7 @@ Which is nice in many aspect, for instance decorrelating application from depend
 
 However in our case, by isolating  the application part from the rest of the Azure platform, we lock down the managed identity capability.  
 **By no mean can a container be used with managed identity...**  
-Actually, that's not exactly true. For instance you can leverage managed identity for Azure Container Instance. 
+Currently, that's not exactly true. For instance you can leverage managed identity for Azure Container Instance. 
 However, you cannot, container natively speaking, have a container be seen directly by the Azure control plane, and thus be associated with stuff from this control plane such as the managed identity that we are talking about.
 
 That being said, we are now in the heart of our topic. sorry for the long introduction ^^
@@ -482,7 +482,7 @@ spec:
 
 ```
 
-Running the following commands, we can check that the pod is able to reach the keyvaul and get the secret value **without using any password in the pod definition**:
+Running the following commands, we can check that the pod is able to reach the key vault and get the secret value **without using any password in the pod definition**:
 
 ```bash
 
@@ -504,7 +504,7 @@ And that's it for the demo. Now a time for the conclusion.
 
 ## 9. Conclusion and next steps
 
-So, if i'm coprrect, chance are the technology seems interesting but there are still some question remaining. 
+So, if i'm correct, chance are the technology seems interesting but there are still some question remaining. 
 Well that's the case for me atthis point.
 While the architecture and how it's working between the 2 worlds (Azure and Kubernetes) seems clear enough, the impact on how to use it does not seem as clear.
 Also, as presented here, as an OSS, it is not fully supported by Microsoft.
