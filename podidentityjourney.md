@@ -45,10 +45,10 @@ So in our case, the application living on the Azure VM will have a managed ident
 Nice !  
 For information, Azure managed identity come in two flavors:
 
-- System assigned identity (SAI), whichis an identitydirectly associated with Azure services such as VMs or functions to list a few.
-- User assigned identity (UAI), whic is an identity created beforehand in Azure, and then associated to a compatible service.
+- System assigned identity (SAI), which is an identity directly associated with Azure services such as VMs or functions to list a few.
+- User assigned identity (UAI), which is an identity created beforehand in Azure, and then associated to a compatible service.
 
-**Note that only one SAI can be associated ot a service while we can have more than one UAI associated with a service instance.**  
+**Note that only one SAI can be associated to a service while we can have more than one UAI associated with a service instance.**  
 
 ![Illustration 2](./Img/podid03.png)
 
@@ -88,7 +88,7 @@ Now the trouble here is to make a correspondance between the Azure control plane
 For that Azure pod identity relies on the following objects: (yes taken from the documentation page too :p)
 
 - AzureIdentity which is in our case the UAI living in Azure declared in Kubernetes control plane
-- AzureIdentityBinding which is the object inKubernetes API to bind a pod to an AzureIdentity (and thus an SAI) by the means of labels. We will see that in details afterward
+- AzureIdentityBinding which is the object inKubernetes API to bind a pod to an AzureIdentity (and thus an UAI) by the means of labels. We will see that in details afterward
 - AzureAssignedIdentity which is an object in Kubernetes describing therelationship state between the two previous object
 
 And that's all for the basics objects. With that we start to get an idea on how to make those things work. The following schema aims to illustrate the link between our 2 differents control plane: 
@@ -113,7 +113,7 @@ Abstracting the Kubernetes Control plane, it looks like this:
 
 ## 6. Preparing installation on an AKS cluster
 
-After describing the concepts, it's ow time for some practial matter.
+After describing the concepts, it's now time for some practial matter.
 First thing ifrst we will start from an already deployed AKS cluster with the following: 
 
 - Managed Azure AD integration (vs the legacy with app registrations)
@@ -128,12 +128,12 @@ The roles to assign are:
 - Managed Identity Operator
 - Virtual Machine Contributor
 
-Now the question is, who get those role assignments. That where we can leverage our output from terraform. I specified those outputs:
+Now the question is, who get those role assignments. That's where we can leverage our output from terraform. I specified those outputs:
 
 | Output name | Value | Description |
 |:------------|:------------|:------|
 | KubeControlPlane_SAI | `azurerm_kubernetes_cluster.TerraAKSwithRBAC.identity` | AKS Control plane Managed Identity block| 
-| KubeControlPlane_SAI_PrincipalId | `azurerm_kubernetes_cluster.TerraAKSwithRBAC.identity[0].principal_id` |AKS Control plane Managed Identity principal Id | 
+| KubeControlPlane_SAI_PrincipalId | `azurerm_kubernetes_cluster.TerraAKSwithRBAC.identity[0].principal_id` | AKS Control plane Managed Identity principal Id | 
 | KubeKubelet_UAI | `azurerm_kubernetes_cluster.TerraAKSwithRBAC.kubelet_identity` | User Assigned Identity block for the Kubelet | 
 | KubeKubelet_UAI_ClientId | `azurerm_kubernetes_cluster.TerraAKSwithRBAC.kubelet_identity[0].client_id` |User Assigned Identity for kubelet principal Id |  
 | KubeKubelet_UAI_ObjectId | `azurerm_kubernetes_cluster.TerraAKSwithRBAC.kubelet_identity[0].object_id` | User Assigned Identity for kubelet object Id |
@@ -332,7 +332,7 @@ I0207 02:22:35.483511       1 mic.go:398] sync thread started.
 
 ```
 
-Now we can deploy the CRD for Azure Identity. Fior that we need to have the azureidentity manifest and the azure identity binding manifest. Since we need to have those objects corresponding to an object in Azure, i personnaly use a local file resource in terraform to build the definition from interpolation. The tempalted yaml are as follow: 
+Now we can deploy the CRD for Azure Identity. For that we need to have the azureidentity manifest and the azure identity binding manifest. Since we need to have those objects corresponding to an object in Azure, i personnaly use a local file resource in terraform to build the definition from interpolation. The tempalted yaml are as follow: 
 
 ```yaml
 
@@ -416,7 +416,7 @@ Ok, that being said, we can focus on an example.
 
 ## 8. Pod Identity in action
 
-A simple example is to give access to a keyvault, through the CSI Driver for keyvault. Since we want to focus on the pod identity here, we will just= list some link: 
+A simple example is to give access to a Key Vault, through the CSI Driver for Key Vault. Since we want to focus on the pod identity here, we will just list some links: 
 
 ```
 
@@ -428,7 +428,7 @@ https://azure.github.io/secrets-store-csi-driver-provider-azure/getting-started/
 
 ```
 
-In this use case, a secret store pointing to a key vault is created: 
+In this use case, a secret store pointing to a Key Vault is created: 
 
 ```yaml
 
@@ -482,7 +482,7 @@ spec:
 
 ```
 
-Running the following commands, we can check that the pod is able to reach the keyvaul and get the secret value **without using any password in the pod definition**:
+Running the following commands, we can check that the pod is able to reach the Key Vault and get the secret value **without using any password in the pod definition**:
 
 ```bash
 
@@ -504,11 +504,11 @@ And that's it for the demo. Now a time for the conclusion.
 
 ## 9. Conclusion and next steps
 
-So, if i'm coprrect, chance are the technology seems interesting but there are still some question remaining. 
-Well that's the case for me atthis point.
+So, if i'm correct, chance are the technology seems interesting but there are still some question remaining. 
+Well that's the case for me at this point.
 While the architecture and how it's working between the 2 worlds (Azure and Kubernetes) seems clear enough, the impact on how to use it does not seem as clear.
 Also, as presented here, as an OSS, it is not fully supported by Microsoft.
-However, we mentionned that the support is coming,with a simpler way of managing it through an Addon. This is similar to the way AGIC evolved and it should become easier in time.
+However, we mentionned that the support is coming, with a simpler way of managing it through an Addon. This is similar to the way AGIC evolved and it should become easier in time.
 On a more practical aspect, i do know that [Velero](https://velero.io/) can be installed with pod identity in mind. I would guess that the use will get more frequent and also simpler.
 Voila, i hope it was as fun for you as for me.
 Before i forget, i created a dedicated github repo for all the requiredinfrastructure to use this. It's [here](https://github.com/dfrappart/aksmeetup), feel free to use it.
