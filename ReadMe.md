@@ -1,9 +1,16 @@
-# I moved from wordpress to markdown based blog
-## This page is a test to move out of wordpress for my blog articles
+# I moved from wordpress to markdown based blog  
+  
+  
+## This page is a test to move out of wordpress for my blog articles  
+  
+  
 
-I was sick and tired about wordpress, so back to basics, this is a simple github page which will host all my new articles
+I was sick and tired about wordpress, so back to basics, this is a simple github page which will host all my new articles.
+I may if i find the time, try to use the github page correctly, but ido not make any promise ^^
 
 Below is a list of the currently available article on this page:  
+
+[AKS: Use AAD identity for pods and make your SecOps happy](https://github.com/dfrappart/articles/blob/master/podidentityjourney.md)
 
 [AKS-Managed AAD](https://github.com/dfrappart/articles/blob/master/AKS-Managed%20AAD.md)
 
