@@ -8,3 +8,7 @@ twitter_username: cloudgeekdavid
 github_username:  dfrappart
 
 theme: jekyll-theme-midnight
+
+plugins:
+  - jekyll-feed
+  - jekyll-remote-theme
